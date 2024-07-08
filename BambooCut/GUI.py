@@ -1,61 +1,12 @@
 import flet as ft
-
-
-def optimiser_decoupe(longueur_barre, epaisseur_lame, morceaux):
-    morceaux_triees = sorted(
-        morceaux.items(), key=lambda x: x[1]["longueur"], reverse=True
-    )
-
-    barres = []
-    chute_totale = 0
-
-    while morceaux_triees:
-        barre_actuelle = longueur_barre
-        morceaux_dans_barre = []
-        longueur_coupes = 0
-        nombre_de_coupes = 0
-
-        i = 0
-        while i < len(morceaux_triees):
-            repere, info = morceaux_triees[i]
-            longueur_morceau = info["longueur"]
-            quantite = info["quantite"]
-            angle1 = info.get("angle1", 0)
-            angle2 = info.get("angle2", 0)
-
-            longueur_ajustee = longueur_morceau + angle1 + angle2
-
-            while quantite > 0 and (
-                longueur_coupes + longueur_ajustee + nombre_de_coupes * epaisseur_lame
-                <= longueur_barre
-            ):
-                morceaux_dans_barre.append((repere, longueur_morceau, angle1, angle2))
-                longueur_coupes += longueur_ajustee
-                nombre_de_coupes += 1
-                morceaux_triees[i][1]["quantite"] -= 1
-                quantite -= 1
-
-            if morceaux_triees[i][1]["quantite"] == 0:
-                morceaux_triees.pop(i)
-            else:
-                i += 1
-
-        chute = (
-            longueur_barre - longueur_coupes - (nombre_de_coupes - 1) * epaisseur_lame
-        )
-        chute_totale += chute
-        barres.append({"morceaux": morceaux_dans_barre, "chute": chute})
-
-    nombre_de_barres = len(barres)
-
-    return nombre_de_barres, barres, chute_totale
+from main import optimiser_decoupe
 
 
 def main(page: ft.Page):
 
     page.title = "Optimisation de découpe de barres"
-    page.window_width = 800
-    page.window_height = 600
+    page.window.width = 800
+    page.window.height = 600
 
     longueur_barre = ft.TextField(label="Longueur de la barre", value="6000", width=200)
     epaisseur_lame = ft.TextField(label="Épaisseur de la lame", value="2", width=200)
