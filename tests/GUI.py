@@ -79,6 +79,12 @@ class OptimisationDecoupeApp(ctk.CTk):
             angle2_label = ctk.CTkLabel(row, text=str(angle2), width=100)
             angle2_label.pack(side="left", padx=5)
 
+            # Ajouter les boutons Modifier et Supprimer
+            modifier_button = ctk.CTkButton(row, text="Modifier", command=lambda r=row, d=morceaux_data: self.modifier_morceau(r, d))
+            modifier_button.pack(side="left", padx=5)
+            supprimer_button = ctk.CTkButton(row, text="Supprimer", command=lambda r=row, d=morceaux_data: self.retirer_morceau(r, d))
+            supprimer_button.pack(side="left", padx=5)
+
             self.repere_entry.delete(0, 'end')
             self.longueur_entry.delete(0, 'end')
             self.quantite_entry.delete(0, 'end')
@@ -88,6 +94,25 @@ class OptimisationDecoupeApp(ctk.CTk):
         except ValueError:
             messagebox.showerror("Erreur", "Veuillez entrer des valeurs valides pour tous les champs des morceaux.")
             return
+
+    def retirer_morceau(self, row, data):
+        row.destroy()
+        self.morceaux_entries.remove(data)
+
+    def modifier_morceau(self, row, data):
+        self.repere_entry.delete(0, 'end')
+        self.longueur_entry.delete(0, 'end')
+        self.quantite_entry.delete(0, 'end')
+        self.angle1_entry.delete(0, 'end')
+        self.angle2_entry.delete(0, 'end')
+
+        self.repere_entry.insert(0, data[0])
+        self.longueur_entry.insert(0, data[1])
+        self.quantite_entry.insert(0, data[2])
+        self.angle1_entry.insert(0, data[3])
+        self.angle2_entry.insert(0, data[4])
+
+        self.retirer_morceau(row, data)
 
     def calculer_decoupe(self):
         try:
