@@ -1,19 +1,18 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from main import optimiser_decoupe
+from logic import optimiser_decoupe
 from PIL import Image
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 
+class OptimisationDecoupeApp(ctk.CTkFrame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        # Le reste de votre code d'initialisation
 
-class OptimisationDecoupeApp(ctk.CTk):
-    def __init__(self):
-        super().__init__()
 
-        self.title("Optimisation de découpe de barres")
-        self.geometry("1150x750")
 
         # Charger les images pour les boutons
         self.edit_image = ctk.CTkImage(Image.open("images/EDIT.png"), size=(20, 20))
@@ -251,6 +250,3 @@ class OptimisationDecoupeApp(ctk.CTk):
         doc.build(elements)
         messagebox.showinfo("Succès", "Le fichier PDF a été généré avec succès sous le nom 'decoupe_barres.pdf'.")
 
-if __name__ == "__main__":
-    app = OptimisationDecoupeApp()
-    app.mainloop()

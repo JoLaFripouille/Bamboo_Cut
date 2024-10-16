@@ -1,71 +1,118 @@
-def optimiser_decoupe(longueur_barre, epaisseur_lame, morceaux):
-    morceaux_triees = sorted(
-        morceaux.items(), key=lambda x: x[1]["longueur"], reverse=True
-    )
+import customtkinter as ctk
+from tkinter import messagebox
+from onglet import OptimisationDecoupeApp
 
-    barres = []
-    chute_totale = 0
+class Application(ctk.CTk):
+    def __init__(self):
+        super().__init__()
 
-    while morceaux_triees:
-        barre_actuelle = longueur_barre
-        morceaux_dans_barre = []
-        longueur_coupes = 0
-        nombre_de_coupes = 0
+        self.title("mise en Barre")
+        self.geometry("1400x750+0+0")  # Ajusté pour accueillir le contenu
 
-        i = 0
-        while i < len(morceaux_triees):
-            repere, info = morceaux_triees[i]
-            longueur_morceau = info["longueur"]
-            quantite = info["quantite"]
-            angle1 = info.get("angle1", 0)
-            angle2 = info.get("angle2", 0)
+        # Cadre principal
+        self.main_frame = ctk.CTkFrame(self)
+        self.main_frame.pack(fill="both", expand=True)
 
-            longueur_ajustee = longueur_morceau + angle1 + angle2
+        # Cadre pour les onglets à gauche
+        self.tab_frame = ctk.CTkFrame(self.main_frame, width=200)
+        self.tab_frame.pack(side="left", fill="y")
 
-            while quantite > 0 and (
-                longueur_coupes + longueur_ajustee + nombre_de_coupes * epaisseur_lame
-                <= longueur_barre
-            ):
-                morceaux_dans_barre.append((repere, longueur_morceau, angle1, angle2))
-                longueur_coupes += longueur_ajustee
-                nombre_de_coupes += 1
-                morceaux_triees[i][1]["quantite"] -= 1
-                quantite -= 1
+        # Cadre défilable pour contenir les boutons d'onglet et le bouton 'Nouvel onglet'
+        self.tabs_container = ctk.CTkScrollableFrame(self.tab_frame)
+        self.tabs_container.pack(fill="both", expand=True)
 
-            if morceaux_triees[i][1]["quantite"] == 0:
-                morceaux_triees.pop(i)
+        # Bouton 'Options' (placé après le cadre défilable)
+        self.options_button = ctk.CTkButton(self.tab_frame, text="Options", command=self.open_options)
+        self.options_button.pack(fill="x", pady=(5, 5))
+
+        # Bouton 'Nouvel onglet' (placé à l'intérieur du tabs_container)
+        self.new_tab_button = ctk.CTkButton(self.tabs_container, text="Nouvel onglet", command=self.create_new_tab)
+        self.new_tab_button.pack(fill="x", pady=(5, 5))
+
+        # Dictionnaires pour stocker les onglets
+        self.tabs = {}
+        self.tab_order = []
+        self.current_tab = None
+
+        # Cadre de contenu à droite
+        self.content_frame = ctk.CTkFrame(self.main_frame)
+        self.content_frame.pack(side="right", fill="both", expand=True)
+
+        # Ajouter l'onglet par défaut
+        self.add_tab("Sans titre")
+
+    def add_tab(self, tab_name):
+        # Créer un cadre pour le bouton d'onglet
+        tab_container = ctk.CTkFrame(self.tabs_container, height=30)
+        tab_container.pack(fill="x")
+
+        # Configurer le gestionnaire de placement pour le positionnement absolu
+        tab_container.pack_propagate(False)
+
+        # Bouton d'onglet
+        tab_button = ctk.CTkButton(tab_container, text=tab_name, command=lambda: self.select_tab(tab_name))
+        tab_button.place(relwidth=1, relheight=1)  # Occupe tout l'espace du conteneur
+
+        # Bouton de suppression superposé sur le bouton d'onglet
+        delete_button = ctk.CTkButton(tab_container, text="X", width=20, height=20, command=lambda: self.delete_tab(tab_name))
+        delete_button.place(relx=0.9, rely=0.1)  # Position relative à l'intérieur du conteneur
+
+        # Replacer le bouton 'Nouvel onglet' en bas
+        self.new_tab_button.pack_forget()
+        self.new_tab_button.pack(fill="x", pady=(5, 5))
+
+        # Stocker les informations de l'onglet
+        self.tabs[tab_name] = {
+            'frame': tab_container,
+            'button': tab_button,
+            'delete_button': delete_button,
+            'content': OptimisationDecoupeApp(self.content_frame)
+        }
+        self.tab_order.append(tab_name)
+
+        # Sélectionner le nouvel onglet
+        self.select_tab(tab_name)
+
+    def create_new_tab(self):
+        tab_name = f"Onglet {len(self.tabs) + 1}"
+        self.add_tab(tab_name)
+
+    def select_tab(self, tab_name):
+        self.current_tab = tab_name
+        # Masquer tous les contenus des onglets
+        for tab in self.tabs.values():
+            tab['content'].pack_forget()
+        # Afficher le contenu de l'onglet sélectionné
+        self.tabs[tab_name]['content'].pack(fill="both", expand=True)
+
+    def delete_tab(self, tab_name):
+        # Détruire le cadre de l'onglet
+        tab_container = self.tabs[tab_name]['frame']
+        tab_container.destroy()
+
+        # Détruire le contenu de l'onglet
+        tab_content = self.tabs[tab_name]['content']
+        tab_content.destroy()
+
+        # Supprimer l'onglet des structures de données
+        del self.tabs[tab_name]
+        self.tab_order.remove(tab_name)
+
+        # Si l'onglet supprimé est le courant, mettre à jour le contenu
+        if self.current_tab == tab_name:
+            self.current_tab = None
+            # Sélectionner un autre onglet si disponible
+            if self.tab_order:
+                self.select_tab(self.tab_order[-1])  # Sélectionner le dernier onglet
             else:
-                i += 1
+                # S'il n'y a plus d'onglets, masquer le content_frame
+                for widget in self.content_frame.winfo_children():
+                    widget.destroy()
 
-        chute = (
-            longueur_barre - longueur_coupes - (nombre_de_coupes - 1) * epaisseur_lame
-        )
-        chute_totale += chute
-        barres.append({"morceaux": morceaux_dans_barre, "chute": chute})
-
-    nombre_de_barres = len(barres)
-
-    return nombre_de_barres, barres, chute_totale
-
+    def open_options(self):
+        # Méthode appelée lorsque le bouton 'Options' est cliqué
+        messagebox.showinfo("Options", "Les options seront disponibles ici.")
 
 if __name__ == "__main__":
-    # Test de la fonction optimiser_decoupe
-    longueur_barre = 6000
-    epaisseur_lame = 2
-    morceaux = {
-        "A": {"longueur": 1500, "quantite": 3},
-        "B": {"longueur": 2000, "quantite": 2},
-        "C": {"longueur": 500, "quantite": 5},
-    }
-    nombre_de_barres, barres, chute_totale = optimiser_decoupe(
-        longueur_barre, epaisseur_lame, morceaux
-    )
-    print(f"Nombre de barres: {nombre_de_barres}")
-    for i, barre in enumerate(barres):
-        print(f"Barre {i+1}:")
-        for morceau in barre["morceaux"]:
-            print(
-                f"  - Repère: {morceau[0]}, Longueur: {morceau[1]}, Angle 1: {morceau[2]}, Angle 2: {morceau[3]}"
-            )
-        print(f"  Longueur de la chute: {barre['chute']}")
-    print(f"Longueur totale de la chute: {chute_totale}")
+    app = Application()
+    app.mainloop()
